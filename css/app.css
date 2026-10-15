@@ -100,3 +100,34 @@ canvas {
     font-size: 13px;
     color: #ccc;
 }
+/* Planetas con sonido */
+#planet-hint,
+#planet-toast {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1500;
+    pointer-events: none;
+    color: #fff;
+    font-size: 15px;
+    font-weight: bold;
+    padding: 10px 18px;
+    border-radius: 24px;
+    background-color: rgba(10, 15, 40, 0.65);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    white-space: nowrap;
+}
+
+#planet-hint {
+    bottom: calc(24px + env(safe-area-inset-bottom));
+}
+
+#planet-toast {
+    top: calc(24px + env(safe-area-inset-top));
+}
+
+#planet-hint.visible,
+#planet-toast.visible {
+    opacity: 1;
+}

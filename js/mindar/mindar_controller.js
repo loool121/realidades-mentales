@@ -76,8 +76,10 @@ class MindARController {
                 // (el "up" del editor es +Y). En MindAR el plano del target es XY
                 // y +Z apunta hacia la cámara, así que rotamos +90° en X para que
                 // el contenido quede en pie sobre el marcador. 1 unidad MindAR =
-                // ancho del marcador (= 1.65 en el editor), por eso 1/1.65 ≈ 0.6.
-                content.scale.setScalar(0.6);
+                // ancho del marcador. En el editor el marcador (Gizmo) mide 1.729
+                // de ancho (proporción real de target.jpg: 1034x598), por eso
+                // escalamos por 1/1.729.
+                content.scale.setScalar(1 / 1.729);
                 content.rotation.set(THREE.MathUtils.degToRad(90), 0, 0);
 
                 anchor.group.add(content);

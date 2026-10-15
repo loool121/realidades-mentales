@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-	<title></title>
+	<title>Realidades Mentales</title>
 	<meta charset="utf-8">
 	<meta name="generator" content="Three.js Editor">
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
@@ -28,7 +28,7 @@
 
 	<div id="ar-container"></div>
 
-	<div class="log" id="log">asdasdsa</div>
+	<div class="log" id="log"></div>
 
 	<div id="overlay">
 		<button id="start-button">Iniciar</button>
@@ -45,6 +45,7 @@
 		import * as THREE from './js/three.module.js';
 		import { APP } from './js/app.js';
 		import { MindARController } from './js/mindar/mindar_controller.js';
+		import { setupSoundPlanets } from './js/sound_planets.js';
 
 		window.THREE = THREE; // Used by APP Scripts.
 
@@ -57,8 +58,10 @@
 		const progressLabel = document.getElementById('progress-label');
 
 		const debugMode = new URLSearchParams(location.search).get('debug') === '1';
+		if (!debugMode) log.style.display = 'none'; // el log solo se ve con ?debug=1
 
 		let player = null;
+		let soundPlanets = null;
 		let mindarController = null;
 		let loaded = false;
 		let loadPromise = null;
@@ -96,6 +99,9 @@
 				await player.load(JSON.parse(text));
 				player.setSize(window.innerWidth, window.innerHeight);
 				player.play();
+
+				// 3 planetas que reproducen sonidos distintos al tocarlos.
+				soundPlanets = setupSoundPlanets(player);
 				setProgress(55, 'Escena lista...');
 
 				document.body.appendChild(player.dom);
@@ -130,6 +136,9 @@
 
 			progressContainer.style.display = 'flex';
 
+			// Desbloquea el audio aquí: el navegador exige un gesto del usuario.
+			if (soundPlanets) soundPlanets.unlockAudio();
+
 			try {
 				await loadEverything();
 				if (!loaded) return;
@@ -141,6 +150,12 @@
 				window.mindarController = mindarController;
 
 				await mindarController.start();
+
+				if (soundPlanets) {
+					soundPlanets.unlockAudio();
+					mindarController.addListener('found', () => soundPlanets.showHint(true));
+					mindarController.addListener('lost', () => soundPlanets.showHint(false));
+				}
 
 				// El player sigue funcionando (scripts/audio) pero su canvas ya no se usa.
 				if (player?.dom) player.dom.style.display = 'none';

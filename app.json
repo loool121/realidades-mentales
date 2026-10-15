@@ -549,7 +549,7 @@
 							"static": false,
 							"matrixAutoUpdate": true,
 							"layers": 1,
-							"matrix": [-0.0061485823504632935,-5.495603971894524e-16,1.6499885438799504,0,0.9999930568969397,1.1102230246251565e-16,0.00372641354573533,0,-1.1102230246251565e-16,1,3.3306690738754696e-16,0,-0.33257122929935834,0,0,1],
+							"matrix": [1.729,0,0,0,0,0,-1,0,0,1,0,0,0,0,0,1],
 							"up": [0,1,0],
 							"geometry": "57bd457d-d992-42e8-bce2-8b3e43de05e7",
 							"material": "2feb05a3-ff5e-4370-b8f6-10758da80a85"
@@ -581,7 +581,7 @@
 									"static": false,
 									"matrixAutoUpdate": true,
 									"layers": 1,
-									"matrix": [2.220446049250313e-16,0,-1,0,0,1,0,0,1,0,2.220446049250313e-16,0,0,0,0,1],
+									"matrix": [2.220446049250313e-16,0,-1,0,0,1,0,0,1,0,2.220446049250313e-16,0,0,0,-0.335,1],
 									"up": [0,1,0],
 									"children": [
 										{
@@ -630,7 +630,7 @@
 											"static": false,
 											"matrixAutoUpdate": true,
 											"layers": 1,
-											"matrix": [-0.018007052114874078,9.992007221626409e-16,2.9999459571922507,0,5.999891914384501,1.3322676295501878e-15,0.036014104229749155,0,-1.1102230246251565e-16,0.9999999999999998,-2.220446049250313e-16,0,-0.1979863947447471,0,-2.3240464932714664,1],
+											"matrix": [-0.018007052114874078,9.992007221626409e-16,2.9999459571922507,0,5.999891914384501,1.3322676295501878e-15,0.036014104229749155,0,-1.1102230246251565e-16,0.9999999999999998,-2.220446049250313e-16,0,-0.1979863947447471,0,-2.3840464932714664,1],
 											"up": [0,1,0],
 											"geometry": "d9c28bfe-4bf6-431f-97e5-5db226c5e67c",
 											"material": "4e6c9436-bb10-444a-a6d8-ebf0d294d08c"
@@ -647,7 +647,7 @@
 											"static": false,
 											"matrixAutoUpdate": true,
 											"layers": 1,
-											"matrix": [-0.018007052114874078,9.992007221626409e-16,2.9999459571922507,0,5.999891914384501,1.3322676295501878e-15,0.036014104229749155,0,-1.1102230246251565e-16,0.9999999999999998,-2.220446049250313e-16,0,-0.1979863947447471,0,2.322215117393354,1],
+											"matrix": [-0.018007052114874078,9.992007221626409e-16,2.9999459571922507,0,5.999891914384501,1.3322676295501878e-15,0.036014104229749155,0,-1.1102230246251565e-16,0.9999999999999998,-2.220446049250313e-16,0,-0.1979863947447471,0,2.382215117393354,1],
 											"up": [0,1,0],
 											"geometry": "d9c28bfe-4bf6-431f-97e5-5db226c5e67c",
 											"material": "4e6c9436-bb10-444a-a6d8-ebf0d294d08c"
@@ -665,7 +665,7 @@
 									"static": false,
 									"matrixAutoUpdate": true,
 									"layers": 1,
-									"matrix": [2.220446049250313e-16,0,-1,0,0,1,0,0,1,0,2.220446049250313e-16,0,0,0,0,1],
+									"matrix": [2.220446049250313e-16,0,-1,0,0,1,0,0,1,0,2.220446049250313e-16,0,0,0,-0.335,1],
 									"up": [0,1,0],
 									"children": [
 										{
@@ -797,7 +797,7 @@
 		"fbad487d-ab7b-40d7-b6dc-045c93b3c05e": [
 			{
 				"name": "ImageTarget",
-				"source": "const it = {};\n\nit.gizmo = this.getObjectByName('Gizmo');\nit.arContent = this.getObjectByName('ARContent');\nit.target = it.gizmo.material.map;\nit.obj = this;\n\nthis.imageTarget = it;\n\nthis.imageTarget.onFound = function() { \n\tconsole.log('Image target found:', this.imageTarget); \n}\nthis.imageTarget.onLost = function() {\n\tconsole.log('Image target lost:', this.imageTarget);\n}\n\nfunction init() {\n\tplayer.imageTargets.push(this.imageTarget);\n}\n\n"
+				"source": "const it = {};\n\nit.gizmo = this.getObjectByName('Gizmo');\nit.arContent = this.getObjectByName('ARContent');\nit.target = it.gizmo.material.map;\nit.obj = this;\n\nthis.imageTarget = it;\n\nthis.imageTarget.onFound = function() { \n\tconsole.log('Image target found:', this.obj.name); \n}\nthis.imageTarget.onLost = function() {\n\tconsole.log('Image target lost:', this.obj.name);\n}\n\nfunction init() {\n\tplayer.imageTargets.push(this.imageTarget);\n}\n\n"
 			}],
 		"3741222A-BD8F-401C-A5D2-5A907E891896": [
 			{
