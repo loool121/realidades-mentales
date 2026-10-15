@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+	<title>Realidades Mentales · Videos AR</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+	<!-- Ejercicio 2: dos videos sobre el marcador que se reproducen al detectarlo
+	     y se pausan cuando se deja de detectar. Usa el mismo marcador y la misma
+	     copia de three.js que el ejercicio 1 (carpeta raíz del repo). -->
+
+	<script type="importmap">
+	{
+		"imports": {
+			"three": "/js/three.compat.js",
+			"three/addons/": "/js/addons/",
+			"mindar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
+		}
+	}
+	</script>
+
+	<style>
+		html, body {
+			margin: 0;
+			height: 100%;
+			overflow: hidden;
+			background: #000;
+			font-family: system-ui, sans-serif;
+		}
+
+		#ar-container {
+			position: fixed;
+			inset: 0;
+			overflow: hidden;
+		}
+
+		#overlay {
+			position: fixed;
+			inset: 0;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 16px;
+			background: #000;
+			color: #fff;
+			z-index: 2000;
+			text-align: center;
+			padding: 24px;
+			box-sizing: border-box;
+			transition: opacity 0.4s ease;
+		}
+
+		#overlay.hidden {
+			opacity: 0;
+			pointer-events: none;
+		}
+
+		#overlay h1 {
+			margin: 0;
+			font-size: 22px;
+		}
+
+		#overlay p {
+			margin: 0;
+			color: #bbb;
+			font-size: 14px;
+			max-width: 300px;
+		}
+
+		#start-button {
+			padding: 14px 36px;
+			font-size: 16px;
+			font-weight: bold;
+			color: #fff;
+			background: #1976d2;
+			border: none;
+			border-radius: 30px;
+			cursor: pointer;
+		}
+
+		#start-button:disabled {
+			opacity: 0.5;
+		}
+
+		#status {
+			position: fixed;
+			left: 50%;
+			bottom: calc(24px + env(safe-area-inset-bottom));
+			transform: translateX(-50%);
+			z-index: 1500;
+			color: #fff;
+			font-size: 15px;
+			font-weight: bold;
+			padding: 10px 18px;
+			border-radius: 24px;
+			background: rgba(10, 15, 40, 0.7);
+			white-space: nowrap;
+			pointer-events: none;
+			display: none;
+		}
+
+		#status.playing {
+			background: rgba(25, 118, 210, 0.85);
+		}
+	</style>
+</head>
+
+<body>
+
+	<div id="ar-container"></div>
+	<div id="status"></div>
+
+	<div id="overlay">
+		<h1>Videos en realidad aumentada</h1>
+		<p>Apunta la cámara a la imagen marcador. Los videos se reproducen al detectarla y se pausan al perderla.</p>
+		<button id="start-button" disabled>Cargando...</button>
+	</div>
+
+	<script type="module">
+
+		import * as THREE from 'three';
+		import { MindARThree } from 'mindar-image-three';
+
+		const overlay = document.getElementById('overlay');
+		const startButton = document.getElementById('start-button');
+		const statusEl = document.getElementById('status');
+
+		// --- Los videos -----------------------------------------------------------
+		// Para usar otros videos, cambia estas rutas (mp4 H.264, idealmente < 10 MB).
+		const VIDEO_SOURCES = [
+			'/videos/hiperespacio.mp4',
+			'/videos/planeta.mp4',
+		];
+
+		function createVideo(src) {
+			const video = document.createElement('video');
+			video.src = src;
+			video.loop = true;
+			video.muted = true;          // necesario para que el navegador permita reproducirlos solos
+			video.playsInline = true;    // iPhone: que no se abra en pantalla completa
+			video.setAttribute('playsinline', '');
+			video.setAttribute('webkit-playsinline', '');
+			video.crossOrigin = 'anonymous';
+			video.preload = 'auto';
+			return video;
+		}
+
+		const videos = VIDEO_SOURCES.map(createVideo);
+		window.videos = videos;
+
+		// Espera a que los videos tengan datos para habilitar el botón.
+		Promise.all(videos.map((v) => new Promise((resolve) => {
+			if (v.readyState >= 2) return resolve();
+			v.addEventListener('loadeddata', resolve, { once: true });
+			v.addEventListener('error', resolve, { once: true });
+			v.load();
+		}))).then(() => {
+			startButton.disabled = false;
+			startButton.textContent = 'Iniciar';
+		});
+
+		function playAll() { videos.forEach((v) => v.play().catch(() => {})); }
+		function pauseAll() { videos.forEach((v) => v.pause()); }
+
+		function setStatus(playing) {
+			statusEl.style.display = 'block';
+			statusEl.classList.toggle('playing', playing);
+			statusEl.textContent = playing
+				? '▶ Reproduciendo 2 videos'
+				: '⏸ Pausado: apunta al marcador';
+		}
+
+		// --- Pantallas 3D -----------------------------------------------------------
+		// En MindAR 1 unidad = ancho del marcador; el marcador mide 1 x 0.578
+		// (proporción de target.jpg, 1034x598). +Y = arriba de la imagen,
+		// +Z = hacia la cámara.
+
+		function createScreen(video, color) {
+			const group = new THREE.Group();
+
+			const texture = new THREE.VideoTexture(video);
+			texture.colorSpace = THREE.SRGBColorSpace;
+
+			const w = 0.44, h = w * 9 / 16;
+			const screen = new THREE.Mesh(
+				new THREE.PlaneGeometry(w, h),
+				new THREE.MeshBasicMaterial({ map: texture, toneMapped: false })
+			);
+			screen.position.z = 0.002;
+
+			const frame = new THREE.Mesh(
+				new THREE.PlaneGeometry(w + 0.025, h + 0.025),
+				new THREE.MeshBasicMaterial({ color })
+			);
+
+			group.add(frame, screen);
+			return group;
+		}
+
+		const screens = [
+			createScreen(videos[0], 0x7c4dff),
+			createScreen(videos[1], 0x29b6f6),
+		];
+
+		// Lado a lado sobre el marcador, un poco separados de la superficie
+		// y ligeramente girados hacia el centro, como dos monitores.
+		screens[0].position.set(-0.24, 0.02, 0.04);
+		screens[0].rotation.y = THREE.MathUtils.degToRad(12);
+		screens[1].position.set(0.24, 0.02, 0.04);
+		screens[1].rotation.y = THREE.MathUtils.degToRad(-12);
+
+		// --- AR -------------------------------------------------------------------
+
+		let mindar = null;
+
+		async function startAR() {
+			mindar = new MindARThree({
+				container: document.getElementById('ar-container'),
+				imageTargetSrc: '/assets/marker/targets.mind',
+				filterMinCF: 0.001,
+				filterBeta: 1000,
+				warmupTolerance: 5,
+				missTolerance: 5,
+				uiLoading: 'no',
+				uiScanning: 'no',
+				uiError: 'yes',
+			});
+
+			const { renderer, scene, camera } = mindar;
+			renderer.setPixelRatio(window.devicePixelRatio);
+
+			const anchor = mindar.addAnchor(0);
+			screens.forEach((s) => anchor.group.add(s));
+
+			// Aquí está lo que pide el ejercicio:
+			anchor.onTargetFound = () => {
+				playAll();
+				setStatus(true);
+			};
+			anchor.onTargetLost = () => {
+				pauseAll();
+				setStatus(false);
+			};
+
+			await mindar.start();
+			renderer.setAnimationLoop(() => renderer.render(scene, camera));
+		}
+
+		startButton.addEventListener('click', async () => {
+			startButton.disabled = true;
+			startButton.textContent = 'Iniciando cámara...';
+
+			// Desbloquea los videos dentro del gesto del usuario (iOS lo exige):
+			// los reproduce un instante y los pausa hasta que aparezca el marcador.
+			await Promise.all(videos.map((v) => v.play().then(() => v.pause()).catch(() => {})));
+
+			try {
+				await startAR();
+				setStatus(false);
+				overlay.classList.add('hidden');
+				setTimeout(() => overlay.remove(), 400);
+			} catch (e) {
+				console.error(e);
+				startButton.disabled = false;
+				startButton.textContent = 'Reintentar';
+			}
+		});
+
+	</script>
+</body>
+
+</html>
